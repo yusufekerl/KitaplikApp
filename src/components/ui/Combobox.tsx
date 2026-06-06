@@ -39,7 +39,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
     return (
       <div ref={containerRef} className="flex flex-col gap-1">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-gray-700">
+          <label htmlFor={inputId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {label}
           </label>
         )}
@@ -60,19 +60,20 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
             }}
             className={clsx(
               'w-full px-3 py-2 text-sm border rounded-lg outline-none transition-colors',
-              'placeholder:text-gray-400',
+              'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100',
+              'placeholder:text-gray-400 dark:placeholder:text-gray-500',
               error
                 ? 'border-red-300 focus:ring-2 focus:ring-red-200'
-                : 'border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100',
+                : 'border-gray-200 dark:border-gray-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40',
             )}
           />
           {open && filtered.length > 0 && (
-            <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-44 overflow-y-auto">
+            <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-44 overflow-y-auto">
               {filtered.map((opt) => (
                 <li key={opt}>
                   <button
                     type="button"
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 hover:text-indigo-700"
+                    className="w-full text-left px-3 py-2 text-sm text-gray-800 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300"
                     onMouseDown={() => {
                       onChange(opt)
                       setInput(opt)
@@ -86,7 +87,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
             </ul>
           )}
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
       </div>
     )
   }

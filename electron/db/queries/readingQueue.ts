@@ -37,6 +37,12 @@ export function addToQueue(db: Database.Database, bookId: number): void {
 
 export function removeFromQueue(db: Database.Database, bookId: number): void {
   db.prepare('DELETE FROM reading_queue WHERE book_id = ?').run(bookId)
+  const remaining = db.prepare('SELECT id FROM reading_queue ORDER BY position ASC').all() as { id: number }[]
+  const update = db.prepare('UPDATE reading_queue SET position = ? WHERE id = ?')
+  const reorder = db.transaction(() => {
+    remaining.forEach((row, i) => update.run(i + 1, row.id))
+  })
+  reorder()
 }
 
 export function reorderQueue(db: Database.Database, orderedBookIds: number[]): void {

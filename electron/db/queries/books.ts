@@ -201,5 +201,22 @@ export function updateBook(
 }
 
 export function deleteBook(db: Database.Database, id: number): void {
+  const book = db.prepare(
+    'SELECT author_id, translator_id, publisher_id, genre_id FROM books WHERE id = ?'
+  ).get(id) as { author_id: number; translator_id: number | null; publisher_id: number | null; genre_id: number | null } | undefined
+
+  if (!book) return
+
   db.prepare('DELETE FROM books WHERE id = ?').run(id)
+
+  const cleanup = (col: string, table: string, refId: number | null) => {
+    if (refId === null) return
+    const row = db.prepare(`SELECT COUNT(*) as c FROM books WHERE ${col} = ?`).get(refId) as { c: number }
+    if (row.c === 0) db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(refId)
+  }
+
+  cleanup('author_id',     'authors',     book.author_id)
+  cleanup('translator_id', 'translators', book.translator_id)
+  cleanup('publisher_id',  'publishers',  book.publisher_id)
+  cleanup('genre_id',      'genres',      book.genre_id)
 }

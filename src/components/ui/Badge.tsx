@@ -1,5 +1,6 @@
 import { clsx } from 'clsx'
-import { STATUS_LABEL, STATUS_COLOR, type ReadingStatus } from '../../types'
+import { STATUS_COLOR, type ReadingStatus } from '../../types'
+import { useTranslation } from '../../hooks/useTranslation'
 
 interface BadgeProps {
   status: ReadingStatus
@@ -7,6 +8,7 @@ interface BadgeProps {
 }
 
 export function StatusBadge({ status, size = 'sm' }: BadgeProps) {
+  const { t } = useTranslation()
   return (
     <span
       className={clsx(
@@ -15,7 +17,7 @@ export function StatusBadge({ status, size = 'sm' }: BadgeProps) {
         STATUS_COLOR[status],
       )}
     >
-      {STATUS_LABEL[status]}
+      {t.status[status]}
     </span>
   )
 }
