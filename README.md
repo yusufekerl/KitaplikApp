@@ -29,3 +29,7 @@ Bu proje, son kullanıcının bilgisayarına hiçbir ek bağımlılık (Python, 
 | **State Yönetimi** | Zustand | Global Uygulama Hafızası | Çok hafif, Sıfır boilerplate |
 | **Tasarım** | Tailwind CSS | Minimalist & Aydınlık Tema | Hızlı arayüz geliştirme |
 | **Etkileşim** | @dnd-kit | Sürükle-Bırak Okuma Sırası | Akıcı ve mobil uyumlu animasyonlar |
+
+
+
+Kitap severlerin severek kullanacağı bir uygulama geliştirmiş olma dileği ile...
