@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { ColorPicker } from '../components/ui/ColorPicker'
 import type { Category } from '../types'
+import { useTranslation } from '../hooks/useTranslation'
 
 const DEFAULT_COLOR = '#6366f1'
 
@@ -16,6 +17,7 @@ interface CategoryFormState {
 }
 
 export function CategoriesPage() {
+  const { t } = useTranslation()
   const { categories, fetchCategories } = useCategories()
   const { fetchCategories: refreshStore } = useCategoryStore()
 
@@ -41,7 +43,7 @@ export function CategoriesPage() {
 
   const handleSubmit = async () => {
     if (!formState.name.trim()) {
-      setNameError('Kategori adı zorunludur')
+      setNameError(t.categories.validationName)
       return
     }
     setLoading(true)
@@ -62,7 +64,7 @@ export function CategoriesPage() {
   }
 
   const handleDelete = async (cat: Category) => {
-    if (!window.confirm(`"${cat.name}" kategorisi silinsin mi?\n(Kitaplar kategorisiz olur)`)) return
+    if (!window.confirm(t.categories.confirmDelete(cat.name))) return
     await categoriesApi().delete(cat.id)
     fetchCategories()
     refreshStore()
@@ -72,40 +74,38 @@ export function CategoriesPage() {
     <div className="px-6 py-6 max-w-2xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Kategoriler</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            Kitaplarınızı renk kodlu kategorilere göre sınıflandırın
-          </p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t.categories.title}</h1>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{t.categories.subtitle}</p>
         </div>
-        <Button onClick={openAdd}>+ Yeni Kategori</Button>
+        <Button onClick={openAdd}>{t.categories.add}</Button>
       </div>
 
       {categories.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-sm">Henüz kategori yok.</p>
+        <div className="text-center py-20 text-gray-400 dark:text-gray-500">
+          <p className="text-sm">{t.categories.empty}</p>
         </div>
       ) : (
         <div className="space-y-2">
           {categories.map((cat) => (
             <div
               key={cat.id}
-              className="flex items-center gap-4 bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3"
+              className="flex items-center gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm px-4 py-3"
             >
               <div
                 className="w-4 h-4 rounded-full shrink-0"
                 style={{ backgroundColor: cat.color }}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">{cat.name}</p>
-                <p className="text-xs text-gray-400 font-mono">{cat.color}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{cat.name}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">{cat.color}</p>
               </div>
-              <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md">
-                {cat.book_count ?? 0} kitap
+              <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700/50 px-2 py-0.5 rounded-md">
+                {t.categories.bookCount(cat.book_count ?? 0)}
               </span>
-              <Button size="sm" variant="ghost" onClick={() => openEdit(cat)}>Düzenle</Button>
+              <Button size="sm" variant="ghost" onClick={() => openEdit(cat)}>{t.categories.edit}</Button>
               <Button size="sm" variant="ghost" onClick={() => handleDelete(cat)}
-                className="text-red-400 hover:text-red-600 hover:bg-red-50">
-                Sil
+                className="text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                {t.categories.delete}
               </Button>
             </div>
           ))}
@@ -115,20 +115,20 @@ export function CategoriesPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? 'Kategoriyi Düzenle' : 'Yeni Kategori'}
+        title={editing ? t.categories.editTitle : t.categories.newTitle}
         width="sm"
       >
         <div className="space-y-4">
           <Input
-            label="Kategori Adı"
+            label={t.categories.nameLabel}
             value={formState.name}
             onChange={(e) => { setFormState((s) => ({ ...s, name: e.target.value })); setNameError('') }}
             error={nameError}
-            placeholder="Örn: Klasikler"
+            placeholder={t.categories.placeholder}
             autoFocus
           />
           <ColorPicker
-            label="Renk"
+            label={t.categories.colorLabel}
             value={formState.color}
             onChange={(color) => setFormState((s) => ({ ...s, color }))}
           />
@@ -138,13 +138,13 @@ export function CategoriesPage() {
           >
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: formState.color }} />
             <span className="text-sm font-medium" style={{ color: formState.color }}>
-              {formState.name || 'Önizleme'}
+              {formState.name || t.categories.preview}
             </span>
           </div>
-          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>İptal</Button>
+          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+            <Button variant="secondary" onClick={() => setModalOpen(false)}>{t.categories.cancel}</Button>
             <Button onClick={handleSubmit} disabled={loading}>
-              {loading ? 'Kaydediliyor…' : editing ? 'Güncelle' : 'Kaydet'}
+              {loading ? t.categories.saving : editing ? t.categories.update : t.categories.save}
             </Button>
           </div>
         </div>

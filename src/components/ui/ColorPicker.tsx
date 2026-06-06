@@ -1,4 +1,5 @@
 import { clsx } from 'clsx'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const PRESET_COLORS = [
   '#EF4444', '#F97316', '#EAB308', '#22C55E',
@@ -13,9 +14,10 @@ interface ColorPickerProps {
 }
 
 export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-2">
-      {label && <span className="text-sm font-medium text-gray-700">{label}</span>}
+      {label && <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>}
       <div className="flex flex-wrap gap-2">
         {PRESET_COLORS.map((color) => (
           <button
@@ -32,14 +34,14 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
         ))}
       </div>
       <div className="flex items-center gap-2 mt-1">
-        <span className="text-xs text-gray-500">Özel renk:</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{t.colorPicker.custom}</span>
         <input
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-8 h-7 rounded border border-gray-200 cursor-pointer p-0.5"
+          className="w-8 h-7 rounded border border-gray-200 dark:border-gray-600 cursor-pointer p-0.5 bg-white dark:bg-gray-700"
         />
-        <span className="text-xs text-gray-400 font-mono">{value}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">{value}</span>
       </div>
     </div>
   )

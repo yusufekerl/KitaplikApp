@@ -8,25 +8,24 @@ import { authorsApi, translatorsApi, publishersApi, genresApi } from '../../lib/
 import { Input } from '../ui/Input'
 import { Combobox } from '../ui/Combobox'
 import { Button } from '../ui/Button'
+import { useTranslation } from '../../hooks/useTranslation'
 
-const schema = z.object({
-  title:          z.string().min(1, 'Kitap adı zorunludur'),
-  authorName:     z.string().min(1, 'Yazar zorunludur'),
-  translatorName: z.string().optional().nullable(),
-  publisherName:  z.string().optional().nullable(),
-  genreName:      z.string().optional().nullable(),
-  categoryId:     z.number().optional().nullable(),
-  edition_info:   z.string().optional().nullable(),
-  page_count:     z.coerce.number().int().positive().optional().nullable(),
-  reading_status: z.enum(['read', 'reading', 'unread']),
-  purchase_date:  z.string().optional().nullable(),
-  reading_date:   z.string().optional().nullable(),
-  purchase_city:  z.string().optional().nullable(),
-  description:    z.string().optional().nullable(),
-  notes:          z.string().optional().nullable(),
-})
-
-type FormValues = z.infer<typeof schema>
+type FormValues = {
+  title: string
+  authorName: string
+  translatorName?: string | null
+  publisherName?: string | null
+  genreName?: string | null
+  categoryId?: number | null
+  edition_info?: string | null
+  page_count?: number | null
+  reading_status: 'read' | 'reading' | 'unread'
+  purchase_date?: string | null
+  reading_date?: string | null
+  purchase_city?: string | null
+  description?: string | null
+  notes?: string | null
+}
 
 interface BookFormProps {
   initialData?: Book | null
@@ -55,11 +54,29 @@ function toFormValues(book: Book): FormValues {
 }
 
 export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormProps) {
+  const { t } = useTranslation()
   const { categories } = useCategoryStore()
   const [authors, setAuthors]         = useState<string[]>([])
   const [translators, setTranslators] = useState<string[]>([])
   const [publishers, setPublishers]   = useState<string[]>([])
   const [genres, setGenres]           = useState<string[]>([])
+
+  const schema = z.object({
+    title:          z.string().min(1, t.form.validationTitle),
+    authorName:     z.string().min(1, t.form.validationAuthor),
+    translatorName: z.string().optional().nullable(),
+    publisherName:  z.string().optional().nullable(),
+    genreName:      z.string().optional().nullable(),
+    categoryId:     z.number().optional().nullable(),
+    edition_info:   z.string().optional().nullable(),
+    page_count:     z.coerce.number().int().positive().optional().nullable(),
+    reading_status: z.enum(['read', 'reading', 'unread']),
+    purchase_date:  z.string().optional().nullable(),
+    reading_date:   z.string().optional().nullable(),
+    purchase_city:  z.string().optional().nullable(),
+    description:    z.string().optional().nullable(),
+    notes:          z.string().optional().nullable(),
+  })
 
   const {
     register,
@@ -97,8 +114,8 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
   })
 
   const fieldClass = 'flex flex-col gap-1'
-  const labelClass = 'text-sm font-medium text-gray-700'
-  const selectClass = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+  const labelClass = 'text-sm font-medium text-gray-700 dark:text-gray-300'
+  const selectClass = 'w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
 
   return (
     <form onSubmit={submit} className="space-y-4">
@@ -106,7 +123,7 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
         name="title"
         control={control}
         render={({ field }) => (
-          <Input label="Kitap Adı *" error={errors.title?.message} {...field} />
+          <Input label={t.form.title} error={errors.title?.message} {...field} />
         )}
       />
 
@@ -116,11 +133,11 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
           control={control}
           render={({ field }) => (
             <Combobox
-              label="Yazar *"
+              label={t.form.author}
               options={authors}
               value={field.value}
               onChange={field.onChange}
-              placeholder="Yazar adı"
+              placeholder={t.form.placeholderAuthor}
               error={errors.authorName?.message}
             />
           )}
@@ -130,11 +147,11 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
           control={control}
           render={({ field }) => (
             <Combobox
-              label="Çevirmen"
+              label={t.form.translator}
               options={translators}
               value={field.value ?? ''}
               onChange={field.onChange}
-              placeholder="Türkçe ise boş bırakın"
+              placeholder={t.form.placeholderTranslator}
             />
           )}
         />
@@ -146,11 +163,11 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
           control={control}
           render={({ field }) => (
             <Combobox
-              label="Yayınevi"
+              label={t.form.publisher}
               options={publishers}
               value={field.value ?? ''}
               onChange={field.onChange}
-              placeholder="Yayınevi"
+              placeholder={t.form.placeholderPublisher}
             />
           )}
         />
@@ -159,11 +176,11 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
           control={control}
           render={({ field }) => (
             <Combobox
-              label="Tür"
+              label={t.form.genre}
               options={genres}
               value={field.value ?? ''}
               onChange={field.onChange}
-              placeholder="Roman, Tarih…"
+              placeholder={t.form.placeholderGenre}
             />
           )}
         />
@@ -171,7 +188,7 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
 
       <div className="grid grid-cols-2 gap-4">
         <div className={fieldClass}>
-          <label className={labelClass}>Kategori</label>
+          <label className={labelClass}>{t.form.category}</label>
           <Controller
             name="categoryId"
             control={control}
@@ -181,7 +198,7 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
                 value={field.value ?? ''}
                 onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
               >
-                <option value="">Seçiniz</option>
+                <option value="">{t.form.selectCategory}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -190,63 +207,63 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
           />
         </div>
         <Input
-          label="Baskı / Yayım Yılı"
-          placeholder="3. Baskı veya 2018"
+          label={t.form.edition}
+          placeholder={t.form.placeholderEdition}
           {...register('edition_info')}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Sayfa Sayısı"
+          label={t.form.pageCount}
           type="number"
           min={1}
           error={errors.page_count?.message}
           {...register('page_count')}
         />
         <div className={fieldClass}>
-          <label className={labelClass}>Okuma Durumu *</label>
+          <label className={labelClass}>{t.form.status}</label>
           <select className={selectClass} {...register('reading_status')}>
-            <option value="unread">Okunmadı</option>
-            <option value="reading">Okunuyor</option>
-            <option value="read">Okundu</option>
+            <option value="unread">{t.form.statusUnread}</option>
+            <option value="reading">{t.form.statusReading}</option>
+            <option value="read">{t.form.statusRead}</option>
           </select>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Alındığı Tarih" type="date" {...register('purchase_date')} />
-        <Input label="Alındığı Şehir" placeholder="İstanbul" {...register('purchase_city')} />
+        <Input label={t.form.purchaseDate} type="date" {...register('purchase_date')} />
+        <Input label={t.form.purchaseCity} placeholder={t.form.placeholderCity} {...register('purchase_city')} />
       </div>
 
       {(readingStatus === 'read' || readingStatus === 'reading') && (
-        <Input label="Okunma Tarihi" type="date" {...register('reading_date')} />
+        <Input label={t.form.readingDate} type="date" {...register('reading_date')} />
       )}
 
       <div className={fieldClass}>
-        <label className={labelClass}>Açıklama</label>
+        <label className={labelClass}>{t.form.description}</label>
         <textarea
           className={`${selectClass} resize-none`}
           rows={3}
-          placeholder="Kısa bir açıklama…"
+          placeholder={t.form.placeholderDesc}
           {...register('description')}
         />
       </div>
 
       <div className={fieldClass}>
-        <label className={labelClass}>Notlar</label>
+        <label className={labelClass}>{t.form.notes}</label>
         <textarea
           className={`${selectClass} resize-none`}
           rows={3}
-          placeholder="Kişisel notlar…"
+          placeholder={t.form.placeholderNotes}
           {...register('notes')}
         />
       </div>
 
-      <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-        <Button type="button" variant="secondary" onClick={onCancel}>İptal</Button>
+      <div className="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+        <Button type="button" variant="secondary" onClick={onCancel}>{t.form.cancel}</Button>
         <Button type="submit" disabled={loading}>
-          {loading ? 'Kaydediliyor…' : initialData ? 'Güncelle' : 'Kaydet'}
+          {loading ? t.form.saving : initialData ? t.form.update : t.form.save}
         </Button>
       </div>
     </form>

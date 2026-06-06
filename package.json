@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "dist:win": "npm run build && electron-builder --win",
+    "dist:win": "npm run build && electron-builder --win --dir",
+    "pack:win": "powershell -Command \"Compress-Archive -Path release/win-unpacked/* -DestinationPath release/Kitaplik-win.zip -Force\"",
     "postinstall": "echo ok"
   },
   "build": {
@@ -26,8 +27,7 @@
       }
     ],
     "win": {
-      "target": "nsis",
-      "icon": "resources/icon.ico"
+      "target": "nsis"
     },
     "nsis": {
       "oneClick": false,

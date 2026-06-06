@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useBookStore } from '../store/bookStore'
 import { useCategories } from '../hooks/useCategories'
 import { useReadingQueue } from '../hooks/useReadingQueue'
@@ -7,20 +7,12 @@ import { BookDetail } from '../components/Book/BookDetail'
 import { BookForm } from '../components/Book/BookForm'
 import { Modal } from '../components/ui/Modal'
 import { Button } from '../components/ui/Button'
-import { booksApi } from '../lib/window'
-import type { Book, CreateBookInput, ReadingStatus } from '../types'
-import { genresApi } from '../lib/window'
-import { useEffect } from 'react'
-import type { LookupItem } from '../types'
-
-const STATUS_OPTIONS: { value: ReadingStatus | ''; label: string }[] = [
-  { value: '', label: 'Tümü' },
-  { value: 'unread', label: 'Okunmadı' },
-  { value: 'reading', label: 'Okunuyor' },
-  { value: 'read', label: 'Okundu' },
-]
+import { booksApi, genresApi } from '../lib/window'
+import type { Book, CreateBookInput, ReadingStatus, LookupItem } from '../types'
+import { useTranslation } from '../hooks/useTranslation'
 
 export function Library() {
+  const { t } = useTranslation()
   const { books, filters, loading, fetchBooks, setFilters } = useBookStore()
   const { categories, fetchCategories } = useCategories()
   const { add: addToQueue, queue } = useReadingQueue()
@@ -31,10 +23,14 @@ export function Library() {
   const [addOpen, setAddOpen] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
 
+  const refreshGenres = useCallback(() => {
+    genresApi().getAll().then((r) => { if (r.ok) setGenres(r.data) })
+  }, [])
+
   useEffect(() => {
     fetchBooks()
     fetchCategories()
-    genresApi().getAll().then((r) => { if (r.ok) setGenres(r.data) })
+    refreshGenres()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = useCallback(async (data: CreateBookInput) => {
@@ -45,8 +41,9 @@ export function Library() {
       setAddOpen(false)
       fetchBooks()
       fetchCategories()
+      refreshGenres()
     }
-  }, [fetchBooks, fetchCategories])
+  }, [fetchBooks, fetchCategories, refreshGenres])
 
   const handleUpdate = useCallback(async (data: CreateBookInput) => {
     if (!editBook) return
@@ -56,17 +53,19 @@ export function Library() {
     if (result.ok) {
       setEditBook(null)
       fetchBooks()
+      refreshGenres()
       if (selectedBook?.id === editBook.id) setSelectedBook(result.data)
     }
-  }, [editBook, fetchBooks, selectedBook])
+  }, [editBook, fetchBooks, selectedBook, refreshGenres])
 
   const handleDelete = useCallback(async () => {
     if (!selectedBook) return
-    if (!window.confirm(`"${selectedBook.title}" silinsin mi?`)) return
+    if (!window.confirm(t.library.confirmDelete(selectedBook.title))) return
     await booksApi().delete(selectedBook.id)
     setSelectedBook(null)
     fetchBooks()
-  }, [selectedBook, fetchBooks])
+    refreshGenres()
+  }, [selectedBook, fetchBooks, refreshGenres, t])
 
   const handleAddToQueue = useCallback(async () => {
     if (!selectedBook) return
@@ -75,22 +74,27 @@ export function Library() {
 
   const isInQueue = (bookId: number) => queue.some((q) => q.book_id === bookId)
 
+  const STATUS_OPTIONS: { value: ReadingStatus | ''; label: string }[] = [
+    { value: '', label: t.status.all },
+    { value: 'unread', label: t.status.unread },
+    { value: 'reading', label: t.status.reading },
+    { value: 'read', label: t.status.read },
+  ]
+
   return (
     <div className="flex h-full">
-      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
-        <div className="flex items-center gap-3 px-6 py-4 bg-white border-b border-gray-100">
+        <div className="flex items-center gap-3 px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex-wrap">
           <input
             type="search"
-            placeholder="Kitap veya yazar ara…"
-            className="flex-1 max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            placeholder={t.library.search}
+            className="flex-1 min-w-0 max-w-xs px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
             value={filters.search ?? ''}
             onChange={(e) => setFilters({ search: e.target.value })}
           />
 
           <select
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-400"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg outline-none focus:border-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             value={filters.status ?? ''}
             onChange={(e) => setFilters({ status: (e.target.value as ReadingStatus) || null })}
           >
@@ -100,61 +104,60 @@ export function Library() {
           </select>
 
           <select
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-400"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg outline-none focus:border-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             value={filters.categoryId ?? ''}
             onChange={(e) => setFilters({ categoryId: e.target.value ? Number(e.target.value) : null })}
           >
-            <option value="">Tüm Kategoriler</option>
+            <option value="">{t.library.allCategories}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
 
           <select
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-400"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg outline-none focus:border-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             value={filters.genreId ?? ''}
             onChange={(e) => setFilters({ genreId: e.target.value ? Number(e.target.value) : null })}
           >
-            <option value="">Tüm Türler</option>
+            <option value="">{t.library.allGenres}</option>
             {genres.map((g) => (
               <option key={g.id} value={g.id}>{g.name}</option>
             ))}
           </select>
 
           <select
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-400"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg outline-none focus:border-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             value={`${filters.sortBy ?? 'created_at'}_${filters.sortDir ?? 'desc'}`}
             onChange={(e) => {
               const [sortBy, sortDir] = e.target.value.split('_') as [typeof filters.sortBy, typeof filters.sortDir]
               setFilters({ sortBy, sortDir })
             }}
           >
-            <option value="created_at_desc">Eklenme (yeni)</option>
-            <option value="created_at_asc">Eklenme (eski)</option>
-            <option value="title_asc">Başlık A–Z</option>
-            <option value="title_desc">Başlık Z–A</option>
-            <option value="author_asc">Yazar A–Z</option>
-            <option value="page_count_asc">Sayfa (az)</option>
-            <option value="page_count_desc">Sayfa (çok)</option>
+            <option value="created_at_desc">{t.library.sortNewest}</option>
+            <option value="created_at_asc">{t.library.sortOldest}</option>
+            <option value="title_asc">{t.library.sortTitleAZ}</option>
+            <option value="title_desc">{t.library.sortTitleZA}</option>
+            <option value="author_asc">{t.library.sortAuthorAZ}</option>
+            <option value="page_count_asc">{t.library.sortPagesAsc}</option>
+            <option value="page_count_desc">{t.library.sortPagesDesc}</option>
           </select>
 
           <div className="ml-auto">
-            <Button onClick={() => setAddOpen(true)}>+ Kitap Ekle</Button>
+            <Button onClick={() => setAddOpen(true)}>{t.library.addBook}</Button>
           </div>
         </div>
 
-        {/* Book grid */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {loading ? (
-            <p className="text-sm text-gray-400 text-center py-12">Yükleniyor…</p>
+            <p className="text-sm text-gray-400 text-center py-12">{t.library.loading}</p>
           ) : books.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-gray-400 text-sm">Kitap bulunamadı.</p>
-              <Button className="mt-4" onClick={() => setAddOpen(true)}>İlk kitabı ekle</Button>
+              <p className="text-gray-400 text-sm">{t.library.notFound}</p>
+              <Button className="mt-4" onClick={() => setAddOpen(true)}>{t.library.addFirst}</Button>
             </div>
           ) : (
             <>
-              <p className="text-xs text-gray-400 mb-4">{books.length} kitap</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{t.library.bookCount(books.length)}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {books.map((book) => (
                   <BookCard
@@ -169,7 +172,6 @@ export function Library() {
         </div>
       </div>
 
-      {/* Detail panel */}
       {selectedBook && (
         <BookDetail
           book={selectedBook}
@@ -181,8 +183,7 @@ export function Library() {
         />
       )}
 
-      {/* Add modal */}
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Yeni Kitap" width="lg">
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title={t.library.newBook} width="lg">
         <BookForm
           onSubmit={handleCreate}
           onCancel={() => setAddOpen(false)}
@@ -190,11 +191,10 @@ export function Library() {
         />
       </Modal>
 
-      {/* Edit modal */}
       <Modal
         open={!!editBook}
         onClose={() => setEditBook(null)}
-        title="Kitabı Düzenle"
+        title={t.library.editBook}
         width="lg"
       >
         {editBook && (
