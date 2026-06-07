@@ -26,6 +26,14 @@ Thumbs.db
 # Dev log
 DEVLOG.md
 
+# Kişisel veriler / içe aktarma yardımcı dosyaları — asla commit etme
+*.xlsx
+*.xls
+excel_dump.txt
+import_*.py
+import_*.txt
+inspect_*.py
+
 # Logs
 *.log
 npm-debug.log*
