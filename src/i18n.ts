@@ -1,6 +1,6 @@
 export const translations = {
   tr: {
-    app: { name: 'KitapApp', subtitle: 'KitapApp, Temiz Kitaplık' },
+    app: { name: 'KitapApp', subtitle: 'İletişim İçin: yeker277@gmail.com' },
     common: {
       confirmTitle: 'Onay Gerekiyor',
       confirmDelete: 'Evet, Sil',
@@ -134,7 +134,7 @@ export const translations = {
     colorPicker: { custom: 'Özel renk:' },
   },
   en: {
-    app: { name: 'KitapApp', subtitle: 'KitapApp, Clean Library' },
+    app: { name: 'KitapApp', subtitle: 'For Communication: yeker277@gmail.com' },
     common: {
       confirmTitle: 'Confirmation Required',
       confirmDelete: 'Yes, Delete',
