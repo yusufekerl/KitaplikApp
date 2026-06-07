@@ -11,6 +11,7 @@ import type {
 interface ElectronAPI {
   books: {
     getAll:  (filters?: BookFilters) => Promise<ApiResult<Book[]>>
+    getCount:()                      => Promise<ApiResult<number>>
     getById: (id: number)            => Promise<ApiResult<Book>>
     create:  (data: CreateBookInput) => Promise<ApiResult<Book>>
     update:  (id: number, data: Partial<CreateBookInput>) => Promise<ApiResult<Book>>

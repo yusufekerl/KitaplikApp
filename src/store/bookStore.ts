@@ -16,6 +16,8 @@ const DEFAULT_FILTERS: BookFilters = {
   search: '',
   categoryId: null,
   genreId: null,
+  publisherId: null,
+  translatorId: null,
   status: null,
   sortBy: 'created_at',
   sortDir: 'desc',

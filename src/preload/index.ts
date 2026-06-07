@@ -6,6 +6,7 @@ const invoke = <T>(channel: string, ...args: unknown[]) =>
 contextBridge.exposeInMainWorld('electronAPI', {
   books: {
     getAll:  (filters?: unknown) => invoke('books:getAll', filters),
+    getCount:()                  => invoke('books:getCount'),
     getById: (id: number)        => invoke('books:getById', id),
     create:  (data: unknown)     => invoke('books:create', data),
     update:  (id: number, data: unknown) => invoke('books:update', id, data),

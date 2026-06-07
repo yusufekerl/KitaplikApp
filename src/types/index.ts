@@ -60,6 +60,8 @@ export interface BookFilters {
   search?: string
   categoryId?: number | null
   genreId?: number | null
+  publisherId?: number | null
+  translatorId?: number | null
   status?: ReadingStatus | null
   sortBy?: 'title' | 'created_at' | 'purchase_date' | 'reading_date' | 'page_count' | 'author'
   sortDir?: 'asc' | 'desc'

@@ -36,6 +36,8 @@ export interface BookFilters {
   search?: string
   categoryId?: number
   genreId?: number
+  publisherId?: number
+  translatorId?: number
   status?: 'read' | 'reading' | 'unread'
   sortBy?: 'title' | 'created_at' | 'purchase_date' | 'reading_date' | 'page_count' | 'author'
   sortDir?: 'asc' | 'desc'
@@ -131,6 +133,14 @@ export function getAllBooks(db: Database.Database, filters: BookFilters = {}): B
     conditions.push('b.genre_id = ?')
     params.push(filters.genreId)
   }
+  if (filters.publisherId !== undefined && filters.publisherId !== null) {
+    conditions.push('b.publisher_id = ?')
+    params.push(filters.publisherId)
+  }
+  if (filters.translatorId !== undefined && filters.translatorId !== null) {
+    conditions.push('b.translator_id = ?')
+    params.push(filters.translatorId)
+  }
   if (filters.status) {
     conditions.push('b.reading_status = ?')
     params.push(filters.status)
@@ -142,6 +152,11 @@ export function getAllBooks(db: Database.Database, filters: BookFilters = {}): B
   const sql = `${BASE_QUERY} WHERE ${conditions.join(' AND ')} ORDER BY ${sortField} ${sortDir}`
   const rows = db.prepare(sql).all(...params) as Omit<BookWithRelations, 'categories'>[]
   return attachCategories(db, rows) as BookWithRelations[]
+}
+
+export function getBooksCount(db: Database.Database): number {
+  const row = db.prepare('SELECT COUNT(*) AS count FROM books').get() as { count: number }
+  return row.count
 }
 
 export function getBookById(db: Database.Database, id: number): BookWithRelations | undefined {

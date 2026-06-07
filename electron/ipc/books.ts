@@ -3,6 +3,7 @@ import type { SqlJsDatabase as Database } from '../db/SqlJsDatabase'
 import {
   getAllBooks,
   getBookById,
+  getBooksCount,
   createBook,
   updateBook,
   deleteBook,
@@ -23,6 +24,10 @@ function wrap<T>(fn: () => T): Result<T> {
 export function registerBooksHandlers(db: Database.Database) {
   ipcMain.handle('books:getAll', (_, filters?: BookFilters) =>
     wrap(() => getAllBooks(db, filters ?? {}))
+  )
+
+  ipcMain.handle('books:getCount', () =>
+    wrap(() => getBooksCount(db))
   )
 
   ipcMain.handle('books:getById', (_, id: number) =>

@@ -1,6 +1,6 @@
 export const translations = {
   tr: {
-    app: { name: 'Kitaplık', subtitle: 'Kitap Takip' },
+    app: { name: 'KitapApp', subtitle: 'KitapApp, Temiz Kitaplık' },
     common: {
       confirmTitle: 'Onay Gerekiyor',
       confirmDelete: 'Evet, Sil',
@@ -24,11 +24,14 @@ export const translations = {
       search: 'Kitap veya yazar ara…',
       allCategories: 'Tüm Kategoriler',
       allGenres: 'Tüm Türler',
+      allPublishers: 'Tüm Yayınevleri',
+      allTranslators: 'Tüm Çevirmenler',
       addBook: '+ Kitap Ekle',
       addFirst: 'İlk kitabı ekle',
       notFound: 'Kitap bulunamadı.',
       loading: 'Yükleniyor…',
       bookCount: (n: number) => `${n} kitap`,
+      totalBooks: (n: number) => `Toplam ${n} kitap`,
       newBook: 'Yeni Kitap',
       editBook: 'Kitabı Düzenle',
       confirmDelete: (title: string) => `"${title}" silinsin mi?`,
@@ -131,7 +134,7 @@ export const translations = {
     colorPicker: { custom: 'Özel renk:' },
   },
   en: {
-    app: { name: 'Library', subtitle: 'Book Tracker' },
+    app: { name: 'KitapApp', subtitle: 'KitapApp, Clean Library' },
     common: {
       confirmTitle: 'Confirmation Required',
       confirmDelete: 'Yes, Delete',
@@ -155,11 +158,14 @@ export const translations = {
       search: 'Search books or authors…',
       allCategories: 'All Categories',
       allGenres: 'All Genres',
+      allPublishers: 'All Publishers',
+      allTranslators: 'All Translators',
       addBook: '+ Add Book',
       addFirst: 'Add your first book',
       notFound: 'No books found.',
       loading: 'Loading…',
       bookCount: (n: number) => `${n} book${n !== 1 ? 's' : ''}`,
+      totalBooks: (n: number) => `${n} book${n !== 1 ? 's' : ''} total`,
       newBook: 'New Book',
       editBook: 'Edit Book',
       confirmDelete: (title: string) => `Delete "${title}"?`,
