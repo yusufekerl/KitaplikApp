@@ -15,7 +15,7 @@ export function BookCard({ book, onClick }: BookCardProps) {
       <div className="flex">
         <div
           className="w-1 shrink-0 rounded-l-xl"
-          style={{ backgroundColor: book.category_color ?? '#E5E7EB' }}
+          style={{ backgroundColor: book.categories[0]?.color ?? '#E5E7EB' }}
         />
         <div className="flex-1 px-4 py-4">
           <div className="flex items-start justify-between gap-2">

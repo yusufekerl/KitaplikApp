@@ -15,9 +15,9 @@ export interface CreateCategoryInput {
 
 export function getAllCategories(db: Database.Database): Category[] {
   return db.prepare(`
-    SELECT c.*, COUNT(b.id) as book_count
+    SELECT c.*, COUNT(bc.book_id) as book_count
     FROM categories c
-    LEFT JOIN books b ON b.category_id = c.id
+    LEFT JOIN book_categories bc ON bc.category_id = c.id
     GROUP BY c.id
     ORDER BY c.name ASC
   `).all() as Category[]

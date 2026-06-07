@@ -1,5 +1,12 @@
 import type { SqlJsDatabase as Database } from '../SqlJsDatabase'
-import { findOrCreateLookup } from './lookups'
+import { findOrCreateLookup, cleanupLookupIfOrphan } from './lookups'
+import { reindexQueuePositions } from './readingQueue'
+
+export interface BookCategory {
+  id: number
+  name: string
+  color: string
+}
 
 export interface BookWithRelations {
   id: number
@@ -8,7 +15,6 @@ export interface BookWithRelations {
   translator_id: number | null
   publisher_id: number | null
   genre_id: number | null
-  category_id: number | null
   edition_info: string | null
   page_count: number | null
   reading_status: 'read' | 'reading' | 'unread'
@@ -23,8 +29,7 @@ export interface BookWithRelations {
   translator_name: string | null
   publisher_name: string | null
   genre_name: string | null
-  category_name: string | null
-  category_color: string | null
+  categories: BookCategory[]
 }
 
 export interface BookFilters {
@@ -42,7 +47,7 @@ export interface CreateBookInput {
   translatorName?: string | null
   publisherName?: string | null
   genreName?: string | null
-  categoryId?: number | null
+  categoryIds?: number[]
   edition_info?: string | null
   page_count?: number | null
   reading_status: 'read' | 'reading' | 'unread'
@@ -59,15 +64,12 @@ const BASE_QUERY = `
     a.name  AS author_name,
     t.name  AS translator_name,
     p.name  AS publisher_name,
-    g.name  AS genre_name,
-    c.name  AS category_name,
-    c.color AS category_color
+    g.name  AS genre_name
   FROM books b
   JOIN authors a ON b.author_id = a.id
   LEFT JOIN translators t ON b.translator_id = t.id
   LEFT JOIN publishers  p ON b.publisher_id  = p.id
   LEFT JOIN genres      g ON b.genre_id      = g.id
-  LEFT JOIN categories  c ON b.category_id   = c.id
 `
 
 const SORT_MAP: Record<string, string> = {
@@ -79,6 +81,40 @@ const SORT_MAP: Record<string, string> = {
   author:       'a.name COLLATE NOCASE',
 }
 
+/** Verilen kitap satırlarına ait kategorileri tek seferde çekip her satıra ekler. */
+function attachCategories<T extends { id: number }>(
+  db: Database.Database,
+  rows: T[]
+): (T & { categories: BookCategory[] })[] {
+  if (rows.length === 0) return []
+
+  const placeholders = rows.map(() => '?').join(', ')
+  const links = db.prepare(`
+    SELECT bc.book_id, c.id, c.name, c.color
+    FROM book_categories bc
+    JOIN categories c ON c.id = bc.category_id
+    WHERE bc.book_id IN (${placeholders})
+    ORDER BY c.name COLLATE NOCASE ASC
+  `).all(...rows.map((r) => r.id)) as { book_id: number; id: number; name: string; color: string }[]
+
+  const byBook = new Map<number, BookCategory[]>()
+  for (const link of links) {
+    const list = byBook.get(link.book_id) ?? []
+    list.push({ id: link.id, name: link.name, color: link.color })
+    byBook.set(link.book_id, list)
+  }
+
+  return rows.map((row) => ({ ...row, categories: byBook.get(row.id) ?? [] }))
+}
+
+/** Bir kitabın kategori bağlantılarını verilen kümeyle değiştirir. */
+function setBookCategories(db: Database.Database, bookId: number, categoryIds: number[]): void {
+  const unique = [...new Set(categoryIds)]
+  db.prepare('DELETE FROM book_categories WHERE book_id = ?').run(bookId)
+  const insert = db.prepare('INSERT INTO book_categories (book_id, category_id) VALUES (?, ?)')
+  for (const categoryId of unique) insert.run(bookId, categoryId)
+}
+
 export function getAllBooks(db: Database.Database, filters: BookFilters = {}): BookWithRelations[] {
   const conditions: string[] = ['1=1']
   const params: unknown[] = []
@@ -88,7 +124,7 @@ export function getAllBooks(db: Database.Database, filters: BookFilters = {}): B
     params.push(`%${filters.search}%`, `%${filters.search}%`)
   }
   if (filters.categoryId !== undefined && filters.categoryId !== null) {
-    conditions.push('b.category_id = ?')
+    conditions.push('b.id IN (SELECT book_id FROM book_categories WHERE category_id = ?)')
     params.push(filters.categoryId)
   }
   if (filters.genreId !== undefined && filters.genreId !== null) {
@@ -104,11 +140,14 @@ export function getAllBooks(db: Database.Database, filters: BookFilters = {}): B
   const sortDir   = filters.sortDir === 'asc' ? 'ASC' : 'DESC'
 
   const sql = `${BASE_QUERY} WHERE ${conditions.join(' AND ')} ORDER BY ${sortField} ${sortDir}`
-  return db.prepare(sql).all(...params) as BookWithRelations[]
+  const rows = db.prepare(sql).all(...params) as Omit<BookWithRelations, 'categories'>[]
+  return attachCategories(db, rows) as BookWithRelations[]
 }
 
 export function getBookById(db: Database.Database, id: number): BookWithRelations | undefined {
-  return db.prepare(`${BASE_QUERY} WHERE b.id = ?`).get(id) as BookWithRelations | undefined
+  const row = db.prepare(`${BASE_QUERY} WHERE b.id = ?`).get(id) as Omit<BookWithRelations, 'categories'> | undefined
+  if (!row) return undefined
+  return attachCategories(db, [row])[0] as BookWithRelations
 }
 
 export function createBook(db: Database.Database, data: CreateBookInput): BookWithRelations {
@@ -125,17 +164,16 @@ export function createBook(db: Database.Database, data: CreateBookInput): BookWi
 
   const result = db.prepare(`
     INSERT INTO books (
-      title, author_id, translator_id, publisher_id, genre_id, category_id,
+      title, author_id, translator_id, publisher_id, genre_id,
       edition_info, page_count, reading_status,
       purchase_date, reading_date, purchase_city, description, notes
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     data.title.trim(),
     authorId,
     translatorId,
     publisherId,
     genreId,
-    data.categoryId ?? null,
     data.edition_info?.trim() || null,
     data.page_count ?? null,
     data.reading_status,
@@ -146,7 +184,10 @@ export function createBook(db: Database.Database, data: CreateBookInput): BookWi
     data.notes?.trim() || null,
   )
 
-  return getBookById(db, result.lastInsertRowid as number)!
+  const bookId = result.lastInsertRowid as number
+  setBookCategories(db, bookId, data.categoryIds ?? [])
+
+  return getBookById(db, bookId)!
 }
 
 export function updateBook(
@@ -176,7 +217,7 @@ export function updateBook(
   db.prepare(`
     UPDATE books SET
       title = ?, author_id = ?, translator_id = ?, publisher_id = ?, genre_id = ?,
-      category_id = ?, edition_info = ?, page_count = ?, reading_status = ?,
+      edition_info = ?, page_count = ?, reading_status = ?,
       purchase_date = ?, reading_date = ?, purchase_city = ?, description = ?, notes = ?
     WHERE id = ?
   `).run(
@@ -185,7 +226,6 @@ export function updateBook(
     translatorId,
     publisherId,
     genreId,
-    data.categoryId !== undefined ? (data.categoryId ?? null) : current.category_id,
     data.edition_info !== undefined ? (data.edition_info?.trim() || null) : current.edition_info,
     data.page_count !== undefined ? (data.page_count ?? null) : current.page_count,
     data.reading_status ?? current.reading_status,
@@ -196,6 +236,15 @@ export function updateBook(
     data.notes !== undefined ? (data.notes?.trim() || null) : current.notes,
     id,
   )
+
+  if (data.categoryIds !== undefined) setBookCategories(db, id, data.categoryIds)
+
+  // Artık kullanılmayan eski yazar/çevirmen/yayınevi/tür kayıtlarını temizle
+  // (öneri listelerinde hayalet kalmasınlar diye)
+  if (authorId !== current.author_id)         cleanupLookupIfOrphan(db, 'authors', current.author_id)
+  if (translatorId !== current.translator_id) cleanupLookupIfOrphan(db, 'translators', current.translator_id)
+  if (publisherId !== current.publisher_id)   cleanupLookupIfOrphan(db, 'publishers', current.publisher_id)
+  if (genreId !== current.genre_id)           cleanupLookupIfOrphan(db, 'genres', current.genre_id)
 
   return getBookById(db, id)!
 }
@@ -208,15 +257,10 @@ export function deleteBook(db: Database.Database, id: number): void {
   if (!book) return
 
   db.prepare('DELETE FROM books WHERE id = ?').run(id)
+  reindexQueuePositions(db)
 
-  const cleanup = (col: string, table: string, refId: number | null) => {
-    if (refId === null) return
-    const row = db.prepare(`SELECT COUNT(*) as c FROM books WHERE ${col} = ?`).get(refId) as { c: number }
-    if (row.c === 0) db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(refId)
-  }
-
-  cleanup('author_id',     'authors',     book.author_id)
-  cleanup('translator_id', 'translators', book.translator_id)
-  cleanup('publisher_id',  'publishers',  book.publisher_id)
-  cleanup('genre_id',      'genres',      book.genre_id)
+  cleanupLookupIfOrphan(db, 'authors',     book.author_id)
+  cleanupLookupIfOrphan(db, 'translators', book.translator_id)
+  cleanupLookupIfOrphan(db, 'publishers',  book.publisher_id)
+  cleanupLookupIfOrphan(db, 'genres',      book.genre_id)
 }

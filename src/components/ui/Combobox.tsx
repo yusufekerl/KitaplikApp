@@ -17,6 +17,11 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
     const [open, setOpen] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
 
+    // Dışarı tıklama dinleyicisi her zaman en güncel input/onChange'i okusun diye ref kullanılır —
+    // aksi halde eskimiş (stale) kapanış değerleriyle çağrılıp form değerini sıfırlayabilir.
+    const latest = useRef({ input, onChange })
+    latest.current = { input, onChange }
+
     useEffect(() => { setInput(value) }, [value])
 
     const filtered = input
@@ -24,15 +29,16 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
       : options
 
     useEffect(() => {
+      if (!open) return
       const handler = (e: MouseEvent) => {
         if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
           setOpen(false)
-          onChange(input)
+          latest.current.onChange(latest.current.input)
         }
       }
       document.addEventListener('mousedown', handler)
       return () => document.removeEventListener('mousedown', handler)
-    }, [input, onChange])
+    }, [open])
 
     const inputId = label?.toLowerCase().replace(/\s+/g, '-')
 

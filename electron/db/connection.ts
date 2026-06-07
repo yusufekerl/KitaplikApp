@@ -35,8 +35,30 @@ export async function getDb(): Promise<SqlJsDatabase> {
 
   const schema = readFileSync(schemaPath, 'utf-8')
   db.exec(schema)
+  migrateBookCategoriesToJunctionTable(db)
   db.save()
 
   dbInstance = db
   return dbInstance
+}
+
+/**
+ * Eski şemada kitaplar tek bir `category_id` sütunu üzerinden kategoriye bağlıydı.
+ * Çoklu kategori desteği için bu veriler `book_categories` ara tablosuna taşınır
+ * ve eski sütun kaldırılır. İdempotent: sütun yoksa hiçbir şey yapmaz.
+ */
+function migrateBookCategoriesToJunctionTable(db: SqlJsDatabase): void {
+  const columns = db.prepare('PRAGMA table_info(books)').all() as { name: string }[]
+  const hasCategoryId = columns.some((c) => c.name === 'category_id')
+  if (!hasCategoryId) return
+
+  db.exec(`
+    INSERT OR IGNORE INTO book_categories (book_id, category_id)
+    SELECT b.id, b.category_id FROM books b
+    JOIN categories c ON c.id = b.category_id
+    WHERE b.category_id IS NOT NULL;
+
+    DROP INDEX IF EXISTS idx_books_category;
+    ALTER TABLE books DROP COLUMN category_id;
+  `)
 }

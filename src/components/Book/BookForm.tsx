@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { clsx } from 'clsx'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { Book, CreateBookInput } from '../../types'
 import { useCategoryStore } from '../../store/categoryStore'
+import { CategoryBadge } from '../Category/CategoryBadge'
 import { authorsApi, translatorsApi, publishersApi, genresApi } from '../../lib/window'
 import { Input } from '../ui/Input'
 import { Combobox } from '../ui/Combobox'
@@ -16,7 +18,7 @@ type FormValues = {
   translatorName?: string | null
   publisherName?: string | null
   genreName?: string | null
-  categoryId?: number | null
+  categoryIds: number[]
   edition_info?: string | null
   page_count?: number | null
   reading_status: 'read' | 'reading' | 'unread'
@@ -41,7 +43,7 @@ function toFormValues(book: Book): FormValues {
     translatorName: book.translator_name ?? '',
     publisherName:  book.publisher_name ?? '',
     genreName:      book.genre_name ?? '',
-    categoryId:     book.category_id,
+    categoryIds:    book.categories.map((c) => c.id),
     edition_info:   book.edition_info ?? '',
     page_count:     book.page_count,
     reading_status: book.reading_status,
@@ -67,7 +69,7 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
     translatorName: z.string().optional().nullable(),
     publisherName:  z.string().optional().nullable(),
     genreName:      z.string().optional().nullable(),
-    categoryId:     z.number().optional().nullable(),
+    categoryIds:    z.array(z.number()),
     edition_info:   z.string().optional().nullable(),
     page_count:     z.coerce.number().int().positive().optional().nullable(),
     reading_status: z.enum(['read', 'reading', 'unread']),
@@ -86,7 +88,7 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: initialData ? toFormValues(initialData) : { reading_status: 'unread' },
+    defaultValues: initialData ? toFormValues(initialData) : { reading_status: 'unread', categoryIds: [] },
   })
 
   const readingStatus = watch('reading_status')
@@ -186,32 +188,11 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className={fieldClass}>
-          <label className={labelClass}>{t.form.category}</label>
-          <Controller
-            name="categoryId"
-            control={control}
-            render={({ field }) => (
-              <select
-                className={selectClass}
-                value={field.value ?? ''}
-                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-              >
-                <option value="">{t.form.selectCategory}</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            )}
-          />
-        </div>
-        <Input
-          label={t.form.edition}
-          placeholder={t.form.placeholderEdition}
-          {...register('edition_info')}
-        />
-      </div>
+      <Input
+        label={t.form.edition}
+        placeholder={t.form.placeholderEdition}
+        {...register('edition_info')}
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <Input
@@ -239,6 +220,49 @@ export function BookForm({ initialData, onSubmit, onCancel, loading }: BookFormP
       {(readingStatus === 'read' || readingStatus === 'reading') && (
         <Input label={t.form.readingDate} type="date" {...register('reading_date')} />
       )}
+
+      <div className={fieldClass}>
+        <label className={labelClass}>{t.form.category}</label>
+        <Controller
+          name="categoryIds"
+          control={control}
+          render={({ field }) => (
+            <div className="flex flex-wrap gap-2">
+              {categories.length === 0 && (
+                <p className="text-xs text-gray-400 dark:text-gray-500">{t.form.noCategories}</p>
+              )}
+              {categories.map((c) => {
+                const checked = field.value.includes(c.id)
+                return (
+                  <label
+                    key={c.id}
+                    className={clsx(
+                      'flex items-center gap-1.5 px-2 py-1 rounded-lg border cursor-pointer transition-colors select-none',
+                      checked
+                        ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/30'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500',
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={checked}
+                      onChange={(e) => {
+                        field.onChange(
+                          e.target.checked
+                            ? [...field.value, c.id]
+                            : field.value.filter((id) => id !== c.id)
+                        )
+                      }}
+                    />
+                    <CategoryBadge name={c.name} color={c.color} />
+                  </label>
+                )
+              })}
+            </div>
+          )}
+        />
+      </div>
 
       <div className={fieldClass}>
         <label className={labelClass}>{t.form.description}</label>

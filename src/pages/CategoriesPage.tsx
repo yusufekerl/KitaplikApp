@@ -3,6 +3,7 @@ import { useCategories } from '../hooks/useCategories'
 import { useCategoryStore } from '../store/categoryStore'
 import { categoriesApi } from '../lib/window'
 import { Modal } from '../components/ui/Modal'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { ColorPicker } from '../components/ui/ColorPicker'
@@ -26,6 +27,7 @@ export function CategoriesPage() {
   const [formState, setFormState]   = useState<CategoryFormState>({ name: '', color: DEFAULT_COLOR })
   const [loading, setLoading]       = useState(false)
   const [nameError, setNameError]   = useState('')
+  const [confirmDeleteCat, setConfirmDeleteCat] = useState<Category | null>(null)
 
   const openAdd = () => {
     setEditing(null)
@@ -63,9 +65,14 @@ export function CategoriesPage() {
     }
   }
 
-  const handleDelete = async (cat: Category) => {
-    if (!window.confirm(t.categories.confirmDelete(cat.name))) return
-    await categoriesApi().delete(cat.id)
+  const handleDelete = (cat: Category) => {
+    setConfirmDeleteCat(cat)
+  }
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteCat) return
+    await categoriesApi().delete(confirmDeleteCat.id)
+    setConfirmDeleteCat(null)
     fetchCategories()
     refreshStore()
   }
@@ -149,6 +156,14 @@ export function CategoriesPage() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDeleteCat}
+        title={t.common.confirmTitle}
+        message={confirmDeleteCat ? t.categories.confirmDelete(confirmDeleteCat.name) : ''}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteCat(null)}
+      />
     </div>
   )
 }

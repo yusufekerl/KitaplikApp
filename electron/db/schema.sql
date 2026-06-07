@@ -39,7 +39,6 @@ CREATE TABLE IF NOT EXISTS books (
     translator_id  INTEGER          REFERENCES translators(id) ON DELETE SET NULL,
     publisher_id   INTEGER          REFERENCES publishers(id)  ON DELETE SET NULL,
     genre_id       INTEGER          REFERENCES genres(id)      ON DELETE SET NULL,
-    category_id    INTEGER          REFERENCES categories(id)  ON DELETE SET NULL,
     edition_info   TEXT,
     page_count     INTEGER,
     reading_status TEXT NOT NULL DEFAULT 'unread'
@@ -67,8 +66,14 @@ CREATE TABLE IF NOT EXISTS reading_queue (
     added_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_books_author   ON books(author_id);
-CREATE INDEX IF NOT EXISTS idx_books_genre    ON books(genre_id);
-CREATE INDEX IF NOT EXISTS idx_books_category ON books(category_id);
-CREATE INDEX IF NOT EXISTS idx_books_status   ON books(reading_status);
-CREATE INDEX IF NOT EXISTS idx_books_title    ON books(title COLLATE NOCASE);
+CREATE TABLE IF NOT EXISTS book_categories (
+    book_id     INTEGER NOT NULL REFERENCES books(id)      ON DELETE CASCADE,
+    category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+    PRIMARY KEY (book_id, category_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_books_author        ON books(author_id);
+CREATE INDEX IF NOT EXISTS idx_books_genre         ON books(genre_id);
+CREATE INDEX IF NOT EXISTS idx_books_status        ON books(reading_status);
+CREATE INDEX IF NOT EXISTS idx_books_title         ON books(title COLLATE NOCASE);
+CREATE INDEX IF NOT EXISTS idx_book_categories_cat ON book_categories(category_id);

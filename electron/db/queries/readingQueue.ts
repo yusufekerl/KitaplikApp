@@ -18,12 +18,21 @@ export function getAllQueue(db: Database.Database): ReadingQueueItem[] {
       q.id, q.book_id, q.position, q.added_at,
       b.title, b.reading_status,
       a.name AS author_name,
-      c.color AS category_color,
-      c.name  AS category_name
+      (
+        SELECT c.color FROM book_categories bc
+        JOIN categories c ON c.id = bc.category_id
+        WHERE bc.book_id = b.id
+        ORDER BY c.name COLLATE NOCASE ASC LIMIT 1
+      ) AS category_color,
+      (
+        SELECT c.name FROM book_categories bc
+        JOIN categories c ON c.id = bc.category_id
+        WHERE bc.book_id = b.id
+        ORDER BY c.name COLLATE NOCASE ASC LIMIT 1
+      ) AS category_name
     FROM reading_queue q
     JOIN books b ON q.book_id = b.id
     JOIN authors a ON b.author_id = a.id
-    LEFT JOIN categories c ON b.category_id = c.id
     ORDER BY q.position ASC
   `).all() as ReadingQueueItem[]
 }
@@ -35,14 +44,19 @@ export function addToQueue(db: Database.Database, bookId: number): void {
   db.prepare('INSERT INTO reading_queue (book_id, position) VALUES (?, ?)').run(bookId, row.max + 1)
 }
 
-export function removeFromQueue(db: Database.Database, bookId: number): void {
-  db.prepare('DELETE FROM reading_queue WHERE book_id = ?').run(bookId)
+/** Sıradaki kalan kayıtların `position` değerlerini 1'den başlayarak ardışık hale getirir. */
+export function reindexQueuePositions(db: Database.Database): void {
   const remaining = db.prepare('SELECT id FROM reading_queue ORDER BY position ASC').all() as { id: number }[]
   const update = db.prepare('UPDATE reading_queue SET position = ? WHERE id = ?')
   const reorder = db.transaction(() => {
     remaining.forEach((row, i) => update.run(i + 1, row.id))
   })
   reorder()
+}
+
+export function removeFromQueue(db: Database.Database, bookId: number): void {
+  db.prepare('DELETE FROM reading_queue WHERE book_id = ?').run(bookId)
+  reindexQueuePositions(db)
 }
 
 export function reorderQueue(db: Database.Database, orderedBookIds: number[]): void {

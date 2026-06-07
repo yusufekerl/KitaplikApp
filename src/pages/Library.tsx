@@ -6,6 +6,7 @@ import { BookCard } from '../components/Book/BookCard'
 import { BookDetail } from '../components/Book/BookDetail'
 import { BookForm } from '../components/Book/BookForm'
 import { Modal } from '../components/ui/Modal'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Button } from '../components/ui/Button'
 import { booksApi, genresApi } from '../lib/window'
 import type { Book, CreateBookInput, ReadingStatus, LookupItem } from '../types'
@@ -58,14 +59,21 @@ export function Library() {
     }
   }, [editBook, fetchBooks, selectedBook, refreshGenres])
 
-  const handleDelete = useCallback(async () => {
+  const [confirmDeleteBook, setConfirmDeleteBook] = useState<Book | null>(null)
+
+  const handleDelete = useCallback(() => {
     if (!selectedBook) return
-    if (!window.confirm(t.library.confirmDelete(selectedBook.title))) return
-    await booksApi().delete(selectedBook.id)
+    setConfirmDeleteBook(selectedBook)
+  }, [selectedBook])
+
+  const confirmDelete = useCallback(async () => {
+    if (!confirmDeleteBook) return
+    await booksApi().delete(confirmDeleteBook.id)
+    setConfirmDeleteBook(null)
     setSelectedBook(null)
     fetchBooks()
     refreshGenres()
-  }, [selectedBook, fetchBooks, refreshGenres, t])
+  }, [confirmDeleteBook, fetchBooks, refreshGenres])
 
   const handleAddToQueue = useCallback(async () => {
     if (!selectedBook) return
@@ -158,7 +166,7 @@ export function Library() {
           ) : (
             <>
               <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{t.library.bookCount(books.length)}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {books.map((book) => (
                   <BookCard
                     key={book.id}
@@ -206,6 +214,14 @@ export function Library() {
           />
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDeleteBook}
+        title={t.common.confirmTitle}
+        message={confirmDeleteBook ? t.library.confirmDelete(confirmDeleteBook.title) : ''}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteBook(null)}
+      />
     </div>
   )
 }

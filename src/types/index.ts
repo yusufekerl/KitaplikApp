@@ -1,5 +1,11 @@
 export type ReadingStatus = 'read' | 'reading' | 'unread'
 
+export interface BookCategory {
+  id: number
+  name: string
+  color: string
+}
+
 export interface Book {
   id: number
   title: string
@@ -7,7 +13,6 @@ export interface Book {
   translator_id: number | null
   publisher_id: number | null
   genre_id: number | null
-  category_id: number | null
   edition_info: string | null
   page_count: number | null
   reading_status: ReadingStatus
@@ -22,8 +27,7 @@ export interface Book {
   translator_name: string | null
   publisher_name: string | null
   genre_name: string | null
-  category_name: string | null
-  category_color: string | null
+  categories: BookCategory[]
 }
 
 export interface Category {
@@ -67,7 +71,7 @@ export interface CreateBookInput {
   translatorName?: string | null
   publisherName?: string | null
   genreName?: string | null
-  categoryId?: number | null
+  categoryIds?: number[]
   edition_info?: string | null
   page_count?: number | null
   reading_status: ReadingStatus

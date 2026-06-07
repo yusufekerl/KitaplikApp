@@ -79,7 +79,7 @@ export function BookDetail({
 
       <div
         className="h-1.5 w-full shrink-0"
-        style={{ backgroundColor: book.category_color ?? '#E5E7EB' }}
+        style={{ backgroundColor: book.categories[0]?.color ?? '#E5E7EB' }}
       />
 
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
@@ -89,9 +89,9 @@ export function BookDetail({
 
           <div className="flex flex-wrap items-center gap-2 mt-3">
             <StatusBadge status={book.reading_status} size="md" />
-            {book.category_name && book.category_color && (
-              <CategoryBadge name={book.category_name} color={book.category_color} />
-            )}
+            {book.categories.map((c) => (
+              <CategoryBadge key={c.id} name={c.name} color={c.color} />
+            ))}
           </div>
         </div>
 

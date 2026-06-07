@@ -1,6 +1,11 @@
 export const translations = {
   tr: {
     app: { name: 'Kitaplık', subtitle: 'Kitap Takip' },
+    common: {
+      confirmTitle: 'Onay Gerekiyor',
+      confirmDelete: 'Evet, Sil',
+      cancel: 'Vazgeç',
+    },
     nav: {
       library: 'Kitaplık',
       queue: 'Okuma Sırası',
@@ -76,7 +81,7 @@ export const translations = {
       placeholderTranslator: 'Türkçe ise boş bırakın',
       placeholderPublisher: 'Yayınevi',
       placeholderGenre: 'Roman, Tarih…',
-      selectCategory: 'Seçiniz',
+      noCategories: 'Henüz kategori yok — Kategoriler sayfasından ekleyebilirsiniz.',
       placeholderEdition: '3. Baskı veya 2018',
       placeholderCity: 'İstanbul',
       placeholderDesc: 'Kısa bir açıklama…',
@@ -127,6 +132,11 @@ export const translations = {
   },
   en: {
     app: { name: 'Library', subtitle: 'Book Tracker' },
+    common: {
+      confirmTitle: 'Confirmation Required',
+      confirmDelete: 'Yes, Delete',
+      cancel: 'Cancel',
+    },
     nav: {
       library: 'Library',
       queue: 'Reading Queue',
@@ -202,7 +212,7 @@ export const translations = {
       placeholderTranslator: 'Leave blank for original language',
       placeholderPublisher: 'Publisher',
       placeholderGenre: 'Fiction, History…',
-      selectCategory: 'Select',
+      noCategories: 'No categories yet — you can add some from the Categories page.',
       placeholderEdition: '3rd Edition or 2018',
       placeholderCity: 'New York',
       placeholderDesc: 'Brief description…',
