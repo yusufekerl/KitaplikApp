@@ -8,6 +8,10 @@ import { registerReadingQueueHandlers } from '../../electron/ipc/readingQueue'
 
 let win: BrowserWindow | null
 
+const iconPath = app.isPackaged
+  ? join(process.resourcesPath, 'icon.ico')
+  : join(__dirname, '..', '..', 'build', 'icon.ico')
+
 function createWindow() {
   win = new BrowserWindow({
     width: 1280,
@@ -15,6 +19,7 @@ function createWindow() {
     minWidth: 960,
     minHeight: 600,
     backgroundColor: '#f9fafb',
+    icon: iconPath,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
