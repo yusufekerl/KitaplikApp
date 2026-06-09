@@ -31,7 +31,10 @@ function createWindow() {
     show: false,
   })
 
-  win.once('ready-to-show', () => win?.show())
+  win.once('ready-to-show', () => {
+    win?.show()
+    win?.setTitle(`KitaplıkApp v${app.getVersion()}`)
+  })
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
