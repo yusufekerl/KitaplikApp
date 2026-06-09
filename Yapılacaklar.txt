@@ -1,0 +1,4 @@
+Zaman İçerisinde Yapılacaklar:
+
+-excel ile kitap içeri/dışarı aktarma
+-silinen kitaplar için çöp kutusu

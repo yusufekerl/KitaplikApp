@@ -36,4 +36,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     remove:   (bookId: number)       => invoke('queue:remove', bookId),
     reorder:  (ids: number[])        => invoke('queue:reorder', ids),
   },
+  stats: {
+    get:     (year: number)               => invoke('stats:get', year),
+    getGoal: (year: number)               => invoke('stats:getGoal', year),
+    setGoal: (year: number, goal: number) => invoke('stats:setGoal', year, goal),
+  },
+  export: {
+    toExcel: () => invoke('export:excel'),
+    backup:  () => invoke('backup:save'),
+  },
 })

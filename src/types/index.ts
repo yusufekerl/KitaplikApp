@@ -86,6 +86,17 @@ export interface CreateBookInput {
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string }
 
+export interface Stats {
+  totalBooks: number
+  readBooks: number
+  readingBooks: number
+  unreadBooks: number
+  booksThisYear: number
+  totalPagesRead: number
+  topGenre: string | null
+  monthlyBreakdown: { month: number; count: number }[]
+}
+
 export const STATUS_LABEL: Record<ReadingStatus, string> = {
   read: 'Okundu',
   reading: 'Okunuyor',
@@ -93,7 +104,7 @@ export const STATUS_LABEL: Record<ReadingStatus, string> = {
 }
 
 export const STATUS_COLOR: Record<ReadingStatus, string> = {
-  read: 'bg-green-100 text-green-800',
-  reading: 'bg-blue-100 text-blue-800',
-  unread: 'bg-gray-100 text-gray-600',
+  read:    'bg-green-100 text-green-800 dark:bg-green-500/25 dark:text-green-300',
+  reading: 'bg-blue-100  text-blue-800  dark:bg-blue-500/25  dark:text-blue-300',
+  unread:  'bg-gray-100  text-gray-600  dark:bg-gray-600/40  dark:text-gray-300',
 }

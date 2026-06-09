@@ -146,12 +146,31 @@ export function getAllBooks(db: Database.Database, filters: BookFilters = {}): B
     params.push(filters.status)
   }
 
-  const sortField = SORT_MAP[filters.sortBy || 'created_at'] ?? 'b.created_at'
-  const sortDir   = filters.sortDir === 'asc' ? 'ASC' : 'DESC'
+  const sortBy  = filters.sortBy || 'created_at'
+  const sortDir = filters.sortDir === 'asc' ? 'ASC' : 'DESC'
 
-  const sql = `${BASE_QUERY} WHERE ${conditions.join(' AND ')} ORDER BY ${sortField} ${sortDir}`
+  // 'title' ve 'author' için SQLite byte sıralaması Türkçe karakterleri yanlış sıralar;
+  // bu alanlar için veriyi önce id ile çekip JS'de locale-aware sıralama yapıyoruz.
+  const needsLocaleSort = sortBy === 'title' || sortBy === 'author'
+  const sqlSortField = needsLocaleSort ? 'b.id' : (SORT_MAP[sortBy] ?? 'b.created_at')
+  const sqlSortDir   = needsLocaleSort ? 'DESC' : sortDir
+
+  // Tüm SQL sıralamalarına b.id ikincil anahtar olarak eklenir.
+  // Bu sayede primary key eşit olan satırlarda (ör. aynı saniyede eklenen kitaplar) sıralama tutarlı olur.
+  const sql = `${BASE_QUERY} WHERE ${conditions.join(' AND ')} ORDER BY ${sqlSortField} ${sqlSortDir}, b.id ${sqlSortDir}`
   const rows = db.prepare(sql).all(...params) as Omit<BookWithRelations, 'categories'>[]
-  return attachCategories(db, rows) as BookWithRelations[]
+  let result = attachCategories(db, rows) as BookWithRelations[]
+
+  if (needsLocaleSort) {
+    const dir = sortDir === 'ASC' ? 1 : -1
+    result = result.sort((a, b) => {
+      const av = sortBy === 'title' ? a.title : a.author_name
+      const bv = sortBy === 'title' ? b.title : b.author_name
+      return dir * av.localeCompare(bv, 'tr', { sensitivity: 'base' })
+    })
+  }
+
+  return result
 }
 
 export function getBooksCount(db: Database.Database): number {

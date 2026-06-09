@@ -3,6 +3,7 @@ import { Sidebar } from './components/Layout/Sidebar'
 import { Library } from './pages/Library'
 import { ReadingQueuePage } from './pages/ReadingQueuePage'
 import { CategoriesPage } from './pages/CategoriesPage'
+import { StatsPage } from './pages/StatsPage'
 import { useSettingsStore } from './store/settingsStore'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
               <Route path="/"           element={<Library />} />
               <Route path="/queue"      element={<ReadingQueuePage />} />
               <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/stats"      element={<StatsPage />} />
             </Routes>
           </main>
         </div>

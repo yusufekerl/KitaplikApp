@@ -5,6 +5,8 @@ import { registerBooksHandlers } from '../../electron/ipc/books'
 import { registerCategoriesHandlers } from '../../electron/ipc/categories'
 import { registerLookupsHandlers } from '../../electron/ipc/lookups'
 import { registerReadingQueueHandlers } from '../../electron/ipc/readingQueue'
+import { registerStatsHandlers } from '../../electron/ipc/stats'
+import { registerExportBackupHandlers } from '../../electron/ipc/exportBackup'
 
 let win: BrowserWindow | null
 
@@ -49,6 +51,8 @@ app.whenReady().then(async () => {
   registerCategoriesHandlers(db)
   registerLookupsHandlers(db)
   registerReadingQueueHandlers(db)
+  registerStatsHandlers(db)
+  registerExportBackupHandlers(db)
 
   createWindow()
 

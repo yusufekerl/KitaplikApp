@@ -72,6 +72,11 @@ CREATE TABLE IF NOT EXISTS book_categories (
     PRIMARY KEY (book_id, category_id)
 );
 
+CREATE TABLE IF NOT EXISTS user_settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_books_author        ON books(author_id);
 CREATE INDEX IF NOT EXISTS idx_books_genre         ON books(genre_id);
 CREATE INDEX IF NOT EXISTS idx_books_status        ON books(reading_status);

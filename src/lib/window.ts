@@ -6,6 +6,7 @@ import type {
   BookFilters,
   CreateBookInput,
   ApiResult,
+  Stats,
 } from '../types'
 
 interface ElectronAPI {
@@ -33,6 +34,15 @@ interface ElectronAPI {
     remove:  (bookId: number)          => Promise<ApiResult<void>>
     reorder: (ids: number[])           => Promise<ApiResult<void>>
   }
+  stats: {
+    get:     (year: number)               => Promise<ApiResult<Stats>>
+    getGoal: (year: number)               => Promise<ApiResult<number | null>>
+    setGoal: (year: number, goal: number) => Promise<ApiResult<void>>
+  }
+  export: {
+    toExcel: () => Promise<ApiResult<string | null>>
+    backup:  () => Promise<ApiResult<string | null>>
+  }
 }
 
 declare global {
@@ -48,3 +58,5 @@ export const translatorsApi= () => window.electronAPI.translators
 export const publishersApi = () => window.electronAPI.publishers
 export const genresApi     = () => window.electronAPI.genres
 export const queueApi      = () => window.electronAPI.readingQueue
+export const statsApi      = () => window.electronAPI.stats
+export const exportApi     = () => window.electronAPI.export

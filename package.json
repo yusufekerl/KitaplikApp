@@ -44,7 +44,8 @@
     }
   },
   "dependencies": {
-    "sql.js": "^1.14.1"
+    "sql.js": "^1.14.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@dnd-kit/core": "^6.3.1",
